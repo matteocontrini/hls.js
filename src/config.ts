@@ -175,6 +175,7 @@ export type HlsConfig = {
   fetchSetup?: (context: LoaderContext, initParams: any) => Request;
   xhrSetup?: (xhr: XMLHttpRequest, url: string) => void;
   useStaticFiller: boolean;
+  fillThreshold: number;
 
   // Alt Audio
   audioStreamController?: typeof AudioStreamController;
@@ -215,6 +216,7 @@ export type HlsConfig = {
 // shallow the properties are cloned, and we don't end up manipulating the default
 export const hlsDefaultConfig: HlsConfig = {
   useStaticFiller: true,
+  fillThreshold: 0.2,
   autoStartLoad: true, // used by stream-controller
   startPosition: -1, // used by stream-controller
   defaultAudioCodec: undefined, // used by stream-controller

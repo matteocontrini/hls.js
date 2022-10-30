@@ -934,9 +934,9 @@ export default class StreamController
       this.config.maxBufferHole
     );
 
-    if (bufferInfo.len <= 0.25) {
+    if (bufferInfo.len <= this.config.fillThreshold) {
       this.log(
-        `Buffer length of ${bufferInfo.len} is below min threshold of 0.25, generating filler`
+        `Buffer length of ${bufferInfo.len} is below min threshold of ${this.config.fillThreshold}, generating filler`
       );
       this.fragCurrent?.loader?.abortWithFill();
     }
