@@ -1,13 +1,15 @@
-import { ErrorTypes, ErrorDetails } from '../errors';
+import { ErrorDetails, ErrorTypes } from '../errors';
+import type { BaseSegment, Part } from './fragment';
 import { Fragment } from './fragment';
 import {
+  FragmentLoaderContext,
   Loader,
   LoaderConfiguration,
-  FragmentLoaderContext,
+  PlaylistLevelType,
 } from '../types/loader';
 import type { HlsConfig } from '../config';
-import type { BaseSegment, Part } from './fragment';
 import type { FragLoadedData } from '../types/events';
+import { logger } from '../utils/logger';
 
 const MIN_CHUNK_SIZE = Math.pow(2, 17); // 128kb
 
@@ -54,6 +56,37 @@ export default class FragmentLoader {
       );
     }
     this.abort();
+
+    if (frag.type == PlaylistLevelType.MAIN && frag.sn == -1) {
+      frag.isFiller = true;
+    }
+
+    if (frag.isFiller) {
+      return new Promise((resolve, reject) => {
+        this.createFiller(
+          frag,
+          (initData: Uint8Array, fragData: Uint8Array) => {
+            const url = Math.random().toString();
+            frag.initSegment = new Fragment(PlaylistLevelType.MAIN, url);
+            frag.initSegment.data = initData;
+
+            onProgress?.({
+              frag,
+              part: null,
+              payload: fragData.buffer,
+              networkDetails: null,
+            });
+
+            resolve({
+              frag,
+              part: null,
+              payload: fragData.buffer,
+              networkDetails: null,
+            });
+          }
+        );
+      });
+    }
 
     const config = this.config;
     const FragmentILoader = config.fLoader;
@@ -136,8 +169,93 @@ export default class FragmentLoader {
             });
           }
         },
+        onMustFill: () => {
+          frag.isFiller = true;
+          this.resetLoader(frag, loader);
+          logger.info(`[fragment-loader] ${frag.sn} aborted with fill`);
+          this.createFiller(
+            frag,
+            (initData: Uint8Array, fragData: Uint8Array) => {
+              logger.info(`[fragment-loader] ${frag.sn} filler generated`);
+
+              const url = Math.random().toString();
+              frag.initSegment = new Fragment(PlaylistLevelType.MAIN, url);
+              frag.initSegment.data = initData;
+
+              onProgress?.({
+                frag,
+                part: null,
+                payload: fragData.buffer,
+                networkDetails: null,
+              });
+
+              resolve({
+                frag,
+                part: null,
+                payload: fragData.buffer,
+                networkDetails: null,
+              });
+            }
+          );
+        },
       });
     });
+  }
+
+  private createFiller(
+    frag: Fragment,
+    callback: (initData: Uint8Array, fragData: Uint8Array) => void
+  ) {
+    const width = 640;
+    const height = 360;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const init = {
+      output: async (chunk, metadata) => {
+        const buffer = new ArrayBuffer(chunk.byteLength);
+        chunk.copyTo(buffer);
+
+        const byteArray = new Uint8Array(buffer);
+
+        const init: Uint8Array = createInit(byteArray);
+        const seg: Uint8Array = createSegment(
+          byteArray,
+          frag.start,
+          frag.duration
+        );
+
+        callback(init, seg);
+      },
+      error: (e) => {
+        logger.error(e);
+      },
+    };
+
+    const config = {
+      codec: 'avc1.64001f',
+      width: width,
+      height: height,
+      bitrate: 3_500_000,
+      framerate: 25,
+      avc: { format: 'annexb' as AvcBitstreamFormat },
+    };
+
+    const encoder = new VideoEncoder(init);
+    encoder.configure(config);
+
+    const frameFromCanvas = new VideoFrame(canvas, {
+      timestamp: frag.start,
+    });
+
+    encoder.encode(frameFromCanvas);
+    frameFromCanvas.close();
   }
 
   public loadPart(
@@ -316,3 +434,11 @@ export interface FragLoadFailResult {
 }
 
 export type FragmentLoadProgressCallback = (result: FragLoadedData) => void;
+
+declare function createInit(byteArray: Uint8Array): Uint8Array;
+
+declare function createSegment(
+  byteArray: Uint8Array,
+  start: number,
+  duration: number
+): Uint8Array;

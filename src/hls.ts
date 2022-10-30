@@ -32,7 +32,7 @@ import type { Fragment } from './loader/fragment';
  * @constructor
  */
 export default class Hls implements HlsEventEmitter {
-  private static defaultConfig?: HlsConfig;
+  public static defaultConfig?: HlsConfig;
 
   public readonly config: HlsConfig;
   public readonly userConfig: Partial<HlsConfig>;

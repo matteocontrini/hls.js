@@ -66,6 +66,7 @@
     "@microsoft/api-extractor": "7.29.5",
     "@types/chai": "4.3.3",
     "@types/chart.js": "2.9.37",
+    "@types/dom-webcodecs": "^0.1.4",
     "@types/mocha": "9.1.1",
     "@types/sinon-chai": "3.2.8",
     "@typescript-eslint/eslint-plugin": "5.23.0",

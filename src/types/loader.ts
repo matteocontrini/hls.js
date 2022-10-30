@@ -112,11 +112,13 @@ export interface LoaderCallbacks<T extends LoaderContext> {
   onTimeout: LoaderOnTimeout<T>;
   onAbort?: LoaderOnAbort<T>;
   onProgress?: LoaderOnProgress<T>;
+  onMustFill?: () => void;
 }
 
 export interface Loader<T extends LoaderContext> {
   destroy(): void;
   abort(): void;
+  abortWithFill(): void;
   load(
     context: LoaderContext,
     config: LoaderConfiguration,

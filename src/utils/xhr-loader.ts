@@ -56,6 +56,13 @@ class XhrLoader implements Loader<LoaderContext> {
     }
   }
 
+  abortWithFill(): void {
+    this.abortInternal();
+    if (this.callbacks?.onMustFill) {
+      this.callbacks.onMustFill();
+    }
+  }
+
   load(
     context: LoaderContext,
     config: LoaderConfiguration,

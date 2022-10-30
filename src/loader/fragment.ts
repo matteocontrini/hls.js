@@ -142,6 +142,8 @@ export class Fragment extends BaseSegment {
   // The Media Initialization Section for this segment
   public initSegment: Fragment | null = null;
 
+  public isFiller: boolean = false;
+
   constructor(type: PlaylistLevelType, baseurl: string) {
     super(baseurl);
     this.type = type;

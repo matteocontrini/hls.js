@@ -200,7 +200,6 @@ class AbrController implements ComponentAPI {
     this.clearTimer();
     if (frag.loader) {
       this.fragCurrent = this.partCurrent = null;
-      frag.loader.abort();
     }
     hls.trigger(Events.FRAG_LOAD_EMERGENCY_ABORTED, { frag, part, stats });
   }
