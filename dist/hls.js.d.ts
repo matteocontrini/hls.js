@@ -1759,6 +1759,7 @@ export declare type HlsConfig = {
     };
     fetchSetup?: (context: LoaderContext, initParams: any) => Request;
     xhrSetup?: (xhr: XMLHttpRequest, url: string) => void;
+    useStaticFiller: boolean;
     audioStreamController?: typeof AudioStreamController;
     audioTrackController?: typeof AudioTrackController;
     subtitleStreamController?: typeof SubtitleStreamController;
