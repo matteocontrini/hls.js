@@ -1249,7 +1249,32 @@ var AbrController = /*#__PURE__*/function () {
       return;
     }
 
-    var requestDelay = performance.now() - stats.loading.start;
+    var requestDelay = performance.now() - stats.loading.start; // Calculate if a filler fragment needs to be injected
+
+    if (frag.sn != 'initSegment') {
+      var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, hls.config.maxBufferHole);
+
+      if (bufferInfo.len <= hls.config.fillThreshold) {
+        var _frag$loader;
+
+        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("Buffer length of " + bufferInfo.len + " is below min threshold of " + hls.config.fillThreshold + ", generating filler");
+        (_frag$loader = frag.loader) === null || _frag$loader === void 0 ? void 0 : _frag$loader.abortWithFill();
+        this.bwEstimator.sample(requestDelay, stats.loaded);
+        this.clearTimer();
+
+        if (frag.loader) {
+          this.fragCurrent = this.partCurrent = null;
+        }
+
+        hls.trigger(_events__WEBPACK_IMPORTED_MODULE_2__["Events"].FRAG_LOAD_EMERGENCY_ABORTED, {
+          frag: frag,
+          part: part,
+          stats: stats
+        });
+        return;
+      }
+    }
+
     var playbackRate = Math.abs(media.playbackRate); // In order to work with a stable bandwidth, only begin monitoring bandwidth after half of the fragment has been loaded
 
     if (requestDelay <= 500 * duration / playbackRate) {
@@ -10477,22 +10502,7 @@ var StreamController = /*#__PURE__*/function (_BaseStreamController) {
       gapController.poll(this.lastCurrentTime, activeFrag);
     }
 
-    if (this.fragCurrent != null && this.fragCurrent.sn != 'initSegment') {
-      this.generateFillerIfNecessary(media);
-    }
-
     this.lastCurrentTime = media.currentTime;
-  };
-
-  _proto.generateFillerIfNecessary = function generateFillerIfNecessary(media) {
-    var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_4__["BufferHelper"].bufferInfo(media, media.currentTime, this.config.maxBufferHole);
-
-    if (bufferInfo.len <= this.config.fillThreshold) {
-      var _this$fragCurrent, _this$fragCurrent$loa;
-
-      this.log("Buffer length of " + bufferInfo.len + " is below min threshold of " + this.config.fillThreshold + ", generating filler");
-      (_this$fragCurrent = this.fragCurrent) === null || _this$fragCurrent === void 0 ? void 0 : (_this$fragCurrent$loa = _this$fragCurrent.loader) === null || _this$fragCurrent$loa === void 0 ? void 0 : _this$fragCurrent$loa.abortWithFill();
-    }
   };
 
   _proto.onFragLoadEmergencyAborted = function onFragLoadEmergencyAborted() {

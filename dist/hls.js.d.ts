@@ -2508,7 +2508,6 @@ declare class StreamController extends BaseStreamController implements NetworkCo
     private onFragBuffered;
     private onError;
     private checkBuffer;
-    private generateFillerIfNecessary;
     private onFragLoadEmergencyAborted;
     private onBufferFlushed;
     private onLevelsUpdated;
