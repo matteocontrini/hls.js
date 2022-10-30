@@ -34,6 +34,7 @@ class MockXhr implements Loader<LoaderContext> {
   }
 
   abort() {}
+  abortWithFill(): void {}
   destroy(): void {}
 }
 
