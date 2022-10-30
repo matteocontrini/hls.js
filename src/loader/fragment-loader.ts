@@ -206,6 +206,24 @@ export default class FragmentLoader {
     frag: Fragment,
     callback: (initData: Uint8Array, fragData: Uint8Array) => void
   ) {
+    if (this.config.useStaticFiller) {
+      const hex =
+        '000000012764001eac5680a02ff9500000000128ee3cb00000000106051a47564adc5c4c433f94efc5113cd143a801ffccccff02002dc6c0800000000125b820027f7c81b05c30c7f81ea338d049c4f52e433b7efadf8ac0b210927f8f64e02800000300000300000301427f21fca1e81217570000030045801bc1320e10d80da12c1701fa358688ac000003000003000003000003000003000025e0';
+      const byteArray = Uint8Array.from(
+        hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+      );
+
+      const init: Uint8Array = createInit(byteArray);
+      const seg: Uint8Array = createSegment(
+        byteArray,
+        frag.start,
+        frag.duration
+      );
+
+      callback(init, seg);
+      return;
+    }
+
     const width = 640;
     const height = 360;
 
@@ -242,7 +260,7 @@ export default class FragmentLoader {
       codec: 'avc1.64001f',
       width: width,
       height: height,
-      bitrate: 3_500_000,
+      bitrate: 3_000_000,
       framerate: 25,
       avc: { format: 'annexb' as AvcBitstreamFormat },
     };
