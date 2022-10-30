@@ -334,6 +334,8 @@ export default class CMCDController implements ComponentAPI {
         this.loader.abort();
       }
 
+      abortWithFill() {}
+
       load(
         context: PlaylistLoaderContext,
         config: LoaderConfiguration,
@@ -375,6 +377,8 @@ export default class CMCDController implements ComponentAPI {
       abort() {
         this.loader.abort();
       }
+
+      abortWithFill() {}
 
       load(
         context: FragmentLoaderContext,

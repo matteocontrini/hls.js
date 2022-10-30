@@ -753,6 +753,8 @@ export class Fragment extends BaseSegment {
     // (undocumented)
     initSegment: Fragment | null;
     // (undocumented)
+    isFiller: boolean;
+    // (undocumented)
     level: number;
     // (undocumented)
     levelkey?: LevelKey;
@@ -891,6 +893,8 @@ class Hls implements HlsEventEmitter {
     static get DefaultConfig(): HlsConfig;
     // Warning: (ae-setter-with-docs) The doc comment for the property "DefaultConfig" must appear on the getter, not the setter.
     static set DefaultConfig(defaultConfig: HlsConfig);
+    // (undocumented)
+    static defaultConfig?: HlsConfig;
     destroy(): void;
     detachMedia(): void;
     get drift(): number | null;
@@ -1610,6 +1614,8 @@ export interface Loader<T extends LoaderContext> {
     // (undocumented)
     abort(): void;
     // (undocumented)
+    abortWithFill(): void;
+    // (undocumented)
     context: T;
     // (undocumented)
     destroy(): void;
@@ -1628,6 +1634,8 @@ export interface LoaderCallbacks<T extends LoaderContext> {
     onAbort?: LoaderOnAbort<T>;
     // (undocumented)
     onError: LoaderOnError<T>;
+    // (undocumented)
+    onMustFill?: () => void;
     // (undocumented)
     onProgress?: LoaderOnProgress<T>;
     // (undocumented)

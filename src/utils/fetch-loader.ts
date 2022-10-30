@@ -219,6 +219,8 @@ class FetchLoader implements Loader<LoaderContext> {
 
     return pump();
   }
+
+  abortWithFill(): void {}
 }
 
 function getRequestParameters(context: LoaderContext, signal): any {
