@@ -895,6 +895,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 // shallow the properties are cloned, and we don't end up manipulating the default
 var hlsDefaultConfig = _objectSpread(_objectSpread({
   useStaticFiller: true,
+  fillThreshold: 0.2,
   autoStartLoad: true,
   // used by stream-controller
   startPosition: -1,
@@ -10476,7 +10477,7 @@ var StreamController = /*#__PURE__*/function (_BaseStreamController) {
       gapController.poll(this.lastCurrentTime, activeFrag);
     }
 
-    if (this.fragCurrent != null) {
+    if (this.fragCurrent != null && this.fragCurrent.sn != 'initSegment') {
       this.generateFillerIfNecessary(media);
     }
 
@@ -10486,10 +10487,10 @@ var StreamController = /*#__PURE__*/function (_BaseStreamController) {
   _proto.generateFillerIfNecessary = function generateFillerIfNecessary(media) {
     var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_4__["BufferHelper"].bufferInfo(media, media.currentTime, this.config.maxBufferHole);
 
-    if (bufferInfo.len <= 0.25) {
+    if (bufferInfo.len <= this.config.fillThreshold) {
       var _this$fragCurrent, _this$fragCurrent$loa;
 
-      this.log("Buffer length of " + bufferInfo.len + " is below min threshold of 0.25, generating filler");
+      this.log("Buffer length of " + bufferInfo.len + " is below min threshold of " + this.config.fillThreshold + ", generating filler");
       (_this$fragCurrent = this.fragCurrent) === null || _this$fragCurrent === void 0 ? void 0 : (_this$fragCurrent$loa = _this$fragCurrent.loader) === null || _this$fragCurrent$loa === void 0 ? void 0 : _this$fragCurrent$loa.abortWithFill();
     }
   };
@@ -18679,33 +18680,6 @@ var FragmentLoader = /*#__PURE__*/function () {
     }
 
     this.abort();
-
-    if (frag.type == _types_loader__WEBPACK_IMPORTED_MODULE_3__["PlaylistLevelType"].MAIN && frag.sn == -1) {
-      frag.isFiller = true;
-    }
-
-    if (frag.isFiller) {
-      return new Promise(function (resolve, reject) {
-        _this.createFiller(frag, function (initData, fragData) {
-          var url = Math.random().toString();
-          frag.initSegment = new _fragment__WEBPACK_IMPORTED_MODULE_2__["Fragment"](_types_loader__WEBPACK_IMPORTED_MODULE_3__["PlaylistLevelType"].MAIN, url);
-          frag.initSegment.data = initData;
-          _onProgress === null || _onProgress === void 0 ? void 0 : _onProgress({
-            frag: frag,
-            part: null,
-            payload: fragData.buffer,
-            networkDetails: null
-          });
-          resolve({
-            frag: frag,
-            part: null,
-            payload: fragData.buffer,
-            networkDetails: null
-          });
-        });
-      });
-    }
-
     var config = this.config;
     var FragmentILoader = config.fLoader;
     var DefaultILoader = config.loader;
