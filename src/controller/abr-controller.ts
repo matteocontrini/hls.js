@@ -122,6 +122,30 @@ class AbrController implements ComponentAPI {
     }
 
     const requestDelay = performance.now() - stats.loading.start;
+
+    // Calculate if a filler fragment needs to be injected
+    if (frag.sn != 'initSegment') {
+      const bufferInfo = BufferHelper.bufferInfo(
+        media,
+        media.currentTime,
+        hls.config.maxBufferHole
+      );
+
+      if (bufferInfo.len <= hls.config.fillThreshold) {
+        logger.info(
+          `Buffer length of ${bufferInfo.len} is below min threshold of ${hls.config.fillThreshold}, generating filler`
+        );
+        frag.loader?.abortWithFill();
+        this.bwEstimator.sample(requestDelay, stats.loaded);
+        this.clearTimer();
+        if (frag.loader) {
+          this.fragCurrent = this.partCurrent = null;
+        }
+        hls.trigger(Events.FRAG_LOAD_EMERGENCY_ABORTED, { frag, part, stats });
+        return;
+      }
+    }
+
     const playbackRate = Math.abs(media.playbackRate);
     // In order to work with a stable bandwidth, only begin monitoring bandwidth after half of the fragment has been loaded
     if (requestDelay <= (500 * duration) / playbackRate) {

@@ -920,26 +920,7 @@ export default class StreamController
       gapController.poll(this.lastCurrentTime, activeFrag);
     }
 
-    if (this.fragCurrent != null && this.fragCurrent.sn != 'initSegment') {
-      this.generateFillerIfNecessary(media);
-    }
-
     this.lastCurrentTime = media.currentTime;
-  }
-
-  private generateFillerIfNecessary(media: HTMLMediaElement) {
-    const bufferInfo = BufferHelper.bufferInfo(
-      media,
-      media.currentTime,
-      this.config.maxBufferHole
-    );
-
-    if (bufferInfo.len <= this.config.fillThreshold) {
-      this.log(
-        `Buffer length of ${bufferInfo.len} is below min threshold of ${this.config.fillThreshold}, generating filler`
-      );
-      this.fragCurrent?.loader?.abortWithFill();
-    }
   }
 
   private onFragLoadEmergencyAborted() {
