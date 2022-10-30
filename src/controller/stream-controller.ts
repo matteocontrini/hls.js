@@ -920,7 +920,7 @@ export default class StreamController
       gapController.poll(this.lastCurrentTime, activeFrag);
     }
 
-    if (this.fragCurrent != null) {
+    if (this.fragCurrent != null && this.fragCurrent.sn != 'initSegment') {
       this.generateFillerIfNecessary(media);
     }
 
