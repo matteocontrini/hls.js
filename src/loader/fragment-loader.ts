@@ -57,37 +57,6 @@ export default class FragmentLoader {
     }
     this.abort();
 
-    if (frag.type == PlaylistLevelType.MAIN && frag.sn == -1) {
-      frag.isFiller = true;
-    }
-
-    if (frag.isFiller) {
-      return new Promise((resolve, reject) => {
-        this.createFiller(
-          frag,
-          (initData: Uint8Array, fragData: Uint8Array) => {
-            const url = Math.random().toString();
-            frag.initSegment = new Fragment(PlaylistLevelType.MAIN, url);
-            frag.initSegment.data = initData;
-
-            onProgress?.({
-              frag,
-              part: null,
-              payload: fragData.buffer,
-              networkDetails: null,
-            });
-
-            resolve({
-              frag,
-              part: null,
-              payload: fragData.buffer,
-              networkDetails: null,
-            });
-          }
-        );
-      });
-    }
-
     const config = this.config;
     const FragmentILoader = config.fLoader;
     const DefaultILoader = config.loader;
