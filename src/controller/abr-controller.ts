@@ -110,8 +110,6 @@ class AbrController implements ComponentAPI {
       return;
     }
 
-    const requestDelay = performance.now() - frag.stats.loading.start;
-
     // Calculate if a filler fragment needs to be injected
     if (frag.sn != 'initSegment') {
       const bufferInfo = BufferHelper.bufferInfo(
@@ -120,14 +118,25 @@ class AbrController implements ComponentAPI {
         config.maxBufferHole
       );
 
-      logger.info('bufferInfo len', bufferInfo.len);
+      const distanceToEndOfBuffer = bufferInfo.len;
+      const distanceToFragment = frag.start - bufferInfo.end;
 
-      if (bufferInfo.len <= config.fillThreshold) {
+      logger.info(
+        `Filler: distanceToEndOfBuffer: ${distanceToEndOfBuffer}, distanceToFragment: ${distanceToFragment}`
+      );
+
+      if (
+        distanceToEndOfBuffer < config.fillThreshold &&
+        distanceToFragment < config.fillThreshold
+      ) {
         logger.info(
-          `Buffer length of ${bufferInfo.len} is below min threshold of ${config.fillThreshold}, generating filler`
+          `Distance to fragment is below min threshold, generating filler`
         );
         frag.loader?.abortWithFill();
+
+        const requestDelay = performance.now() - frag.stats.loading.start;
         this.bwEstimator.sample(requestDelay, frag.stats.loaded);
+
         this.clearTimer2();
         if (frag.loader) {
           this.fragCurrent = this.partCurrent = null;
