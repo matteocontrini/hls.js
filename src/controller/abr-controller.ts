@@ -75,8 +75,11 @@ class AbrController implements ComponentAPI {
   protected onFragLoading(event: Events.FRAG_LOADING, data: FragLoadingData) {
     const frag = data.frag;
     if (frag.type === PlaylistLevelType.MAIN) {
+      logger.info(
+        'fillerCheck: frag loading, about to check if a timer should be started'
+      );
       if (!this.timer) {
-        logger.info('Creating timers');
+        logger.info('fillerCheck: creating timers');
         this.fragCurrent = frag;
         this.partCurrent = data.part ?? null;
         this.timer = self.setInterval(this.onCheck, 100);
@@ -113,6 +116,8 @@ class AbrController implements ComponentAPI {
       logger.info('fillerCheck: paused');
       return;
     }
+
+    logger.info('fillerCheck: frag ' + frag.sn);
 
     // Calculate if a filler fragment needs to be injected
     if (frag.sn != 'initSegment') {

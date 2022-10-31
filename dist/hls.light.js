@@ -1193,10 +1193,12 @@ var AbrController = /*#__PURE__*/function () {
     var frag = data.frag;
 
     if (frag.type === _types_loader__WEBPACK_IMPORTED_MODULE_5__["PlaylistLevelType"].MAIN) {
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: frag loading, about to check if a timer should be started');
+
       if (!this.timer) {
         var _data$part;
 
-        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('Creating timers');
+        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: creating timers');
         this.fragCurrent = frag;
         this.partCurrent = (_data$part = data.part) != null ? _data$part : null;
         this.timer = self.setInterval(this.onCheck, 100);
@@ -1236,8 +1238,9 @@ var AbrController = /*#__PURE__*/function () {
     if (media.paused || !media.playbackRate || !media.readyState) {
       _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: paused');
       return;
-    } // Calculate if a filler fragment needs to be injected
+    }
 
+    _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: frag ' + frag.sn); // Calculate if a filler fragment needs to be injected
 
     if (frag.sn != 'initSegment') {
       var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, config.maxBufferHole);
