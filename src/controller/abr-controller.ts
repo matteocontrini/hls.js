@@ -131,6 +131,8 @@ class AbrController implements ComponentAPI {
         hls.config.maxBufferHole
       );
 
+      logger.info('bufferInfo len', bufferInfo.len);
+
       if (bufferInfo.len <= hls.config.fillThreshold) {
         logger.info(
           `Buffer length of ${bufferInfo.len} is below min threshold of ${hls.config.fillThreshold}, generating filler`

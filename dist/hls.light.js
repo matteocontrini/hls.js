@@ -1247,6 +1247,7 @@ var AbrController = /*#__PURE__*/function () {
 
     if (frag.sn != 'initSegment') {
       var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, hls.config.maxBufferHole);
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('bufferInfo len', bufferInfo.len);
 
       if (bufferInfo.len <= hls.config.fillThreshold) {
         var _frag$loader;
