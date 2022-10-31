@@ -68,7 +68,7 @@ class AbrController implements ComponentAPI {
     this.clearTimer();
     this.clearTimer2();
     // @ts-ignore
-    this.hls = this.onCheck = null;
+    this.hls = this.onCheck = this.onCheck2 = null;
     this.fragCurrent = this.partCurrent = null;
   }
 
@@ -98,17 +98,19 @@ class AbrController implements ComponentAPI {
     const { fragCurrent: frag, hls } = this;
     const { config, media } = hls;
     if (!frag || !media) {
+      logger.info('fillerCheck: no frag or media');
       return;
     }
 
     if (frag.stats.aborted) {
+      logger.info('fillerCheck: frag aborted');
       this.clearTimer2();
       return;
     }
 
     // Actually playing
     if (media.paused || !media.playbackRate || !media.readyState) {
-      logger.info('Filler: paused');
+      logger.info('fillerCheck: paused');
       return;
     }
 
@@ -124,15 +126,15 @@ class AbrController implements ComponentAPI {
       const distanceToFragment = frag.start - bufferInfo.end;
 
       logger.info(
-        `Filler: distanceToEndOfBuffer: ${distanceToEndOfBuffer}, distanceToFragment: ${distanceToFragment}`
+        `fillerCheck: distanceToEndOfBuffer: ${distanceToEndOfBuffer}, distanceToFragment: ${distanceToFragment}`
       );
 
       if (
         distanceToEndOfBuffer < config.fillThreshold &&
-        distanceToFragment < config.fillThreshold
+        distanceToFragment < 0.05
       ) {
         logger.info(
-          `Distance to fragment is below min threshold, generating filler`
+          `fillerCheck: distance to end of buffer is below min threshold, generating filler`
         );
         frag.loader?.abortWithFill();
 

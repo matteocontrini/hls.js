@@ -1185,7 +1185,7 @@ var AbrController = /*#__PURE__*/function () {
     this.clearTimer();
     this.clearTimer2(); // @ts-ignore
 
-    this.hls = this.onCheck = null;
+    this.hls = this.onCheck = this.onCheck2 = null;
     this.fragCurrent = this.partCurrent = null;
   };
 
@@ -1222,17 +1222,19 @@ var AbrController = /*#__PURE__*/function () {
         media = hls.media;
 
     if (!frag || !media) {
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: no frag or media');
       return;
     }
 
     if (frag.stats.aborted) {
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: frag aborted');
       this.clearTimer2();
       return;
     } // Actually playing
 
 
     if (media.paused || !media.playbackRate || !media.readyState) {
-      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('Filler: paused');
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: paused');
       return;
     } // Calculate if a filler fragment needs to be injected
 
@@ -1241,12 +1243,12 @@ var AbrController = /*#__PURE__*/function () {
       var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, config.maxBufferHole);
       var distanceToEndOfBuffer = bufferInfo.len;
       var distanceToFragment = frag.start - bufferInfo.end;
-      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("Filler: distanceToEndOfBuffer: " + distanceToEndOfBuffer + ", distanceToFragment: " + distanceToFragment);
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("fillerCheck: distanceToEndOfBuffer: " + distanceToEndOfBuffer + ", distanceToFragment: " + distanceToFragment);
 
-      if (distanceToEndOfBuffer < config.fillThreshold && distanceToFragment < config.fillThreshold) {
+      if (distanceToEndOfBuffer < config.fillThreshold && distanceToFragment < 0.05) {
         var _frag$loader;
 
-        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("Distance to fragment is below min threshold, generating filler");
+        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("fillerCheck: distance to end of buffer is below min threshold, generating filler");
         (_frag$loader = frag.loader) === null || _frag$loader === void 0 ? void 0 : _frag$loader.abortWithFill();
         var requestDelay = performance.now() - frag.stats.loading.start;
         this.bwEstimator.sample(requestDelay, frag.stats.loaded);
