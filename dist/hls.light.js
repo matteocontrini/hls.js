@@ -1257,8 +1257,6 @@ var AbrController = /*#__PURE__*/function () {
         if (frag.loader) {
           this.fragCurrent = this.partCurrent = null;
         }
-
-        return;
       }
     }
   }
@@ -1443,6 +1441,7 @@ var AbrController = /*#__PURE__*/function () {
   };
 
   _proto.clearTimer2 = function clearTimer2() {
+    _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: clearTimer2');
     self.clearInterval(this.timer2);
     this.timer2 = undefined;
   } // return next auto level

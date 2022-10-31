@@ -145,7 +145,6 @@ class AbrController implements ComponentAPI {
         if (frag.loader) {
           this.fragCurrent = this.partCurrent = null;
         }
-        return;
       }
     }
   }
@@ -351,6 +350,7 @@ class AbrController implements ComponentAPI {
   }
 
   clearTimer2() {
+    logger.info('fillerCheck: clearTimer2');
     self.clearInterval(this.timer2);
     this.timer2 = undefined;
   }
