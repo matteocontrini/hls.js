@@ -23,7 +23,9 @@ class AbrController implements ComponentAPI {
   private lastLoadedFragLevel: number = 0;
   private _nextAutoLevel: number = -1;
   private timer?: number;
+  private timer2?: number;
   private onCheck: Function = this._abandonRulesCheck.bind(this);
+  private onCheck2: Function = this.fillerCheck.bind(this);
   private fragCurrent: Fragment | null = null;
   private partCurrent: Part | null = null;
   private bitrateTestDelay: number = 0;
@@ -64,6 +66,7 @@ class AbrController implements ComponentAPI {
   public destroy() {
     this.unregisterListeners();
     this.clearTimer();
+    this.clearTimer2();
     // @ts-ignore
     this.hls = this.onCheck = null;
     this.fragCurrent = this.partCurrent = null;
@@ -76,6 +79,7 @@ class AbrController implements ComponentAPI {
         this.fragCurrent = frag;
         this.partCurrent = data.part ?? null;
         this.timer = self.setInterval(this.onCheck, 100);
+        this.timer2 = self.setInterval(this.onCheck2, 100);
       }
     }
   }
@@ -86,6 +90,50 @@ class AbrController implements ComponentAPI {
       this.bwEstimator.update(config.abrEwmaSlowLive, config.abrEwmaFastLive);
     } else {
       this.bwEstimator.update(config.abrEwmaSlowVoD, config.abrEwmaFastVoD);
+    }
+  }
+
+  private fillerCheck() {
+    const { fragCurrent: frag, hls } = this;
+    const { config, media } = hls;
+    if (!frag || !media || frag.stats.aborted) {
+      return;
+    }
+
+    if (frag.stats.aborted) {
+      this.clearTimer2();
+      return;
+    }
+
+    // Actually playing
+    if (media.paused || !media.playbackRate || !media.readyState) {
+      return;
+    }
+
+    const requestDelay = performance.now() - frag.stats.loading.start;
+
+    // Calculate if a filler fragment needs to be injected
+    if (frag.sn != 'initSegment') {
+      const bufferInfo = BufferHelper.bufferInfo(
+        media,
+        media.currentTime,
+        config.maxBufferHole
+      );
+
+      logger.info('bufferInfo len', bufferInfo.len);
+
+      if (bufferInfo.len <= config.fillThreshold) {
+        logger.info(
+          `Buffer length of ${bufferInfo.len} is below min threshold of ${config.fillThreshold}, generating filler`
+        );
+        frag.loader?.abortWithFill();
+        this.bwEstimator.sample(requestDelay, frag.stats.loaded);
+        this.clearTimer2();
+        if (frag.loader) {
+          this.fragCurrent = this.partCurrent = null;
+        }
+        return;
+      }
     }
   }
 
@@ -122,32 +170,6 @@ class AbrController implements ComponentAPI {
     }
 
     const requestDelay = performance.now() - stats.loading.start;
-
-    // Calculate if a filler fragment needs to be injected
-    if (frag.sn != 'initSegment') {
-      const bufferInfo = BufferHelper.bufferInfo(
-        media,
-        media.currentTime,
-        hls.config.maxBufferHole
-      );
-
-      logger.info('bufferInfo len', bufferInfo.len);
-
-      if (bufferInfo.len <= hls.config.fillThreshold) {
-        logger.info(
-          `Buffer length of ${bufferInfo.len} is below min threshold of ${hls.config.fillThreshold}, generating filler`
-        );
-        frag.loader?.abortWithFill();
-        this.bwEstimator.sample(requestDelay, stats.loaded);
-        this.clearTimer();
-        if (frag.loader) {
-          this.fragCurrent = this.partCurrent = null;
-        }
-        hls.trigger(Events.FRAG_LOAD_EMERGENCY_ABORTED, { frag, part, stats });
-        return;
-      }
-    }
-
     const playbackRate = Math.abs(media.playbackRate);
     // In order to work with a stable bandwidth, only begin monitoring bandwidth after half of the fragment has been loaded
     if (requestDelay <= (500 * duration) / playbackRate) {
@@ -242,6 +264,7 @@ class AbrController implements ComponentAPI {
       const duration = part ? part.duration : frag.duration;
       // stop monitoring bw once frag loaded
       this.clearTimer();
+      this.clearTimer2();
       // store level id after successful fragment load
       this.lastLoadedFragLevel = frag.level;
       // reset forced auto level value so that next level will be selected
@@ -302,6 +325,7 @@ class AbrController implements ComponentAPI {
       case ErrorDetails.FRAG_LOAD_ERROR:
       case ErrorDetails.FRAG_LOAD_TIMEOUT:
         this.clearTimer();
+        this.clearTimer2();
         break;
       default:
         break;
@@ -311,6 +335,11 @@ class AbrController implements ComponentAPI {
   clearTimer() {
     self.clearInterval(this.timer);
     this.timer = undefined;
+  }
+
+  clearTimer2() {
+    self.clearInterval(this.timer2);
+    this.timer2 = undefined;
   }
 
   // return next auto level

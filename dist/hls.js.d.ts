@@ -3,7 +3,9 @@ declare class AbrController implements ComponentAPI {
     private lastLoadedFragLevel;
     private _nextAutoLevel;
     private timer?;
+    private timer2?;
     private onCheck;
+    private onCheck2;
     private fragCurrent;
     private partCurrent;
     private bitrateTestDelay;
@@ -14,11 +16,13 @@ declare class AbrController implements ComponentAPI {
     destroy(): void;
     protected onFragLoading(event: Events.FRAG_LOADING, data: FragLoadingData): void;
     protected onLevelLoaded(event: Events.LEVEL_LOADED, data: LevelLoadedData): void;
+    private fillerCheck;
     private _abandonRulesCheck;
     protected onFragLoaded(event: Events.FRAG_LOADED, { frag, part }: FragLoadedData): void;
     protected onFragBuffered(event: Events.FRAG_BUFFERED, data: FragBufferedData): void;
     protected onError(event: Events.ERROR, data: ErrorData): void;
     clearTimer(): void;
+    clearTimer2(): void;
     get nextAutoLevel(): number;
     private getNextABRAutoLevel;
     private findBestLevel;

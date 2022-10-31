@@ -1147,7 +1147,9 @@ var AbrController = /*#__PURE__*/function () {
     this.lastLoadedFragLevel = 0;
     this._nextAutoLevel = -1;
     this.timer = void 0;
+    this.timer2 = void 0;
     this.onCheck = this._abandonRulesCheck.bind(this);
+    this.onCheck2 = this.fillerCheck.bind(this);
     this.fragCurrent = null;
     this.partCurrent = null;
     this.bitrateTestDelay = 0;
@@ -1180,7 +1182,8 @@ var AbrController = /*#__PURE__*/function () {
 
   _proto.destroy = function destroy() {
     this.unregisterListeners();
-    this.clearTimer(); // @ts-ignore
+    this.clearTimer();
+    this.clearTimer2(); // @ts-ignore
 
     this.hls = this.onCheck = null;
     this.fragCurrent = this.partCurrent = null;
@@ -1196,6 +1199,7 @@ var AbrController = /*#__PURE__*/function () {
         this.fragCurrent = frag;
         this.partCurrent = (_data$part = data.part) != null ? _data$part : null;
         this.timer = self.setInterval(this.onCheck, 100);
+        this.timer2 = self.setInterval(this.onCheck2, 100);
       }
     }
   };
@@ -1207,6 +1211,49 @@ var AbrController = /*#__PURE__*/function () {
       this.bwEstimator.update(config.abrEwmaSlowLive, config.abrEwmaFastLive);
     } else {
       this.bwEstimator.update(config.abrEwmaSlowVoD, config.abrEwmaFastVoD);
+    }
+  };
+
+  _proto.fillerCheck = function fillerCheck() {
+    var frag = this.fragCurrent,
+        hls = this.hls;
+    var config = hls.config,
+        media = hls.media;
+
+    if (!frag || !media || frag.stats.aborted) {
+      return;
+    }
+
+    if (frag.stats.aborted) {
+      this.clearTimer2();
+      return;
+    } // Actually playing
+
+
+    if (media.paused || !media.playbackRate || !media.readyState) {
+      return;
+    }
+
+    var requestDelay = performance.now() - frag.stats.loading.start; // Calculate if a filler fragment needs to be injected
+
+    if (frag.sn != 'initSegment') {
+      var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, config.maxBufferHole);
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('bufferInfo len', bufferInfo.len);
+
+      if (bufferInfo.len <= config.fillThreshold) {
+        var _frag$loader;
+
+        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("Buffer length of " + bufferInfo.len + " is below min threshold of " + config.fillThreshold + ", generating filler");
+        (_frag$loader = frag.loader) === null || _frag$loader === void 0 ? void 0 : _frag$loader.abortWithFill();
+        this.bwEstimator.sample(requestDelay, frag.stats.loaded);
+        this.clearTimer2();
+
+        if (frag.loader) {
+          this.fragCurrent = this.partCurrent = null;
+        }
+
+        return;
+      }
     }
   }
   /*
@@ -1243,33 +1290,7 @@ var AbrController = /*#__PURE__*/function () {
       return;
     }
 
-    var requestDelay = performance.now() - stats.loading.start; // Calculate if a filler fragment needs to be injected
-
-    if (frag.sn != 'initSegment') {
-      var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, hls.config.maxBufferHole);
-      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('bufferInfo len', bufferInfo.len);
-
-      if (bufferInfo.len <= hls.config.fillThreshold) {
-        var _frag$loader;
-
-        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("Buffer length of " + bufferInfo.len + " is below min threshold of " + hls.config.fillThreshold + ", generating filler");
-        (_frag$loader = frag.loader) === null || _frag$loader === void 0 ? void 0 : _frag$loader.abortWithFill();
-        this.bwEstimator.sample(requestDelay, stats.loaded);
-        this.clearTimer();
-
-        if (frag.loader) {
-          this.fragCurrent = this.partCurrent = null;
-        }
-
-        hls.trigger(_events__WEBPACK_IMPORTED_MODULE_2__["Events"].FRAG_LOAD_EMERGENCY_ABORTED, {
-          frag: frag,
-          part: part,
-          stats: stats
-        });
-        return;
-      }
-    }
-
+    var requestDelay = performance.now() - stats.loading.start;
     var playbackRate = Math.abs(media.playbackRate); // In order to work with a stable bandwidth, only begin monitoring bandwidth after half of the fragment has been loaded
 
     if (requestDelay <= 500 * duration / playbackRate) {
@@ -1338,7 +1359,8 @@ var AbrController = /*#__PURE__*/function () {
       var stats = part ? part.stats : frag.stats;
       var duration = part ? part.duration : frag.duration; // stop monitoring bw once frag loaded
 
-      this.clearTimer(); // store level id after successful fragment load
+      this.clearTimer();
+      this.clearTimer2(); // store level id after successful fragment load
 
       this.lastLoadedFragLevel = frag.level; // reset forced auto level value so that next level will be selected
 
@@ -1401,6 +1423,7 @@ var AbrController = /*#__PURE__*/function () {
       case _errors__WEBPACK_IMPORTED_MODULE_4__["ErrorDetails"].FRAG_LOAD_ERROR:
       case _errors__WEBPACK_IMPORTED_MODULE_4__["ErrorDetails"].FRAG_LOAD_TIMEOUT:
         this.clearTimer();
+        this.clearTimer2();
         break;
 
       default:
@@ -1411,6 +1434,11 @@ var AbrController = /*#__PURE__*/function () {
   _proto.clearTimer = function clearTimer() {
     self.clearInterval(this.timer);
     this.timer = undefined;
+  };
+
+  _proto.clearTimer2 = function clearTimer2() {
+    self.clearInterval(this.timer2);
+    this.timer2 = undefined;
   } // return next auto level
   ;
 
