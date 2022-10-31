@@ -1248,10 +1248,10 @@ var AbrController = /*#__PURE__*/function () {
     if (frag.sn != 'initSegment') {
       var bufferInfo = _utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, media.currentTime, config.maxBufferHole);
       var distanceToEndOfBuffer = bufferInfo.len;
-      var distanceToFragment = frag.start - bufferInfo.end;
-      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("fillerCheck: distanceToEndOfBuffer: " + distanceToEndOfBuffer + ", distanceToFragment: " + distanceToFragment);
+      var nextFragmentOffset = frag.start - bufferInfo.end;
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("fillerCheck: distanceToEndOfBuffer: " + distanceToEndOfBuffer + ", distanceToFragment: " + nextFragmentOffset);
 
-      if (distanceToEndOfBuffer < config.fillThreshold && distanceToFragment < 0.05) {
+      if (distanceToEndOfBuffer < config.fillThreshold && nextFragmentOffset < config.fillThreshold) {
         var _frag$loader;
 
         _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info("fillerCheck: distance to end of buffer is below min threshold, generating filler");

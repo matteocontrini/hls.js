@@ -125,15 +125,15 @@ class AbrController implements ComponentAPI {
       );
 
       const distanceToEndOfBuffer = bufferInfo.len;
-      const distanceToFragment = frag.start - bufferInfo.end;
+      const nextFragmentOffset = frag.start - bufferInfo.end;
 
       logger.info(
-        `fillerCheck: distanceToEndOfBuffer: ${distanceToEndOfBuffer}, distanceToFragment: ${distanceToFragment}`
+        `fillerCheck: distanceToEndOfBuffer: ${distanceToEndOfBuffer}, distanceToFragment: ${nextFragmentOffset}`
       );
 
       if (
         distanceToEndOfBuffer < config.fillThreshold &&
-        distanceToFragment < 0.05
+        nextFragmentOffset < config.fillThreshold
       ) {
         logger.info(
           `fillerCheck: distance to end of buffer is below min threshold, generating filler`
