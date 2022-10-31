@@ -73,15 +73,14 @@ class AbrController implements ComponentAPI {
   protected onFragLoading(event: Events.FRAG_LOADING, data: FragLoadingData) {
     const frag = data.frag;
     if (frag.type === PlaylistLevelType.MAIN) {
-      logger.info(
-        'fillerCheck: frag loading, about to check if a timer should be started'
-      );
-      if (!this.timer) {
-        logger.info('fillerCheck: creating timers');
-        this.fragCurrent = frag;
-        this.partCurrent = data.part ?? null;
-        this.timer = self.setInterval(this.onCheck, 100);
+      this.fragCurrent = frag;
+      this.partCurrent = data.part ?? null;
+      if (frag.sn != 'initSegment' && !this.timer2) {
+        logger.info('fillerCheck: creating timer');
         this.timer2 = self.setInterval(this.onCheck2, 100);
+      }
+      if (!this.timer) {
+        this.timer = self.setInterval(this.onCheck, 100);
       }
     }
   }
@@ -275,10 +274,6 @@ class AbrController implements ComponentAPI {
     event: Events.FRAG_LOADED,
     { frag, part }: FragLoadedData
   ) {
-    if (frag.type == PlaylistLevelType.MAIN) {
-      this.clearTimer2();
-    }
-
     if (
       frag.type === PlaylistLevelType.MAIN &&
       Number.isFinite(frag.sn as number)
@@ -287,6 +282,7 @@ class AbrController implements ComponentAPI {
       const duration = part ? part.duration : frag.duration;
       // stop monitoring bw once frag loaded
       this.clearTimer();
+      this.clearTimer2();
       // store level id after successful fragment load
       this.lastLoadedFragLevel = frag.level;
       // reset forced auto level value so that next level will be selected

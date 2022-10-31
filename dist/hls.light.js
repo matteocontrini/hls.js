@@ -1194,16 +1194,18 @@ var AbrController = /*#__PURE__*/function () {
     var frag = data.frag;
 
     if (frag.type === _types_loader__WEBPACK_IMPORTED_MODULE_5__["PlaylistLevelType"].MAIN) {
-      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: frag loading, about to check if a timer should be started');
+      var _data$part;
+
+      this.fragCurrent = frag;
+      this.partCurrent = (_data$part = data.part) != null ? _data$part : null;
+
+      if (frag.sn != 'initSegment' && !this.timer2) {
+        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: creating timer');
+        this.timer2 = self.setInterval(this.onCheck2, 100);
+      }
 
       if (!this.timer) {
-        var _data$part;
-
-        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('fillerCheck: creating timers');
-        this.fragCurrent = frag;
-        this.partCurrent = (_data$part = data.part) != null ? _data$part : null;
         this.timer = self.setInterval(this.onCheck, 100);
-        this.timer2 = self.setInterval(this.onCheck2, 100);
       }
     }
   };
@@ -1372,15 +1374,12 @@ var AbrController = /*#__PURE__*/function () {
     var frag = _ref.frag,
         part = _ref.part;
 
-    if (frag.type == _types_loader__WEBPACK_IMPORTED_MODULE_5__["PlaylistLevelType"].MAIN) {
-      this.clearTimer2();
-    }
-
     if (frag.type === _types_loader__WEBPACK_IMPORTED_MODULE_5__["PlaylistLevelType"].MAIN && Object(_Users_mcont_Projects_thesis_hls_js_src_polyfills_number__WEBPACK_IMPORTED_MODULE_0__["isFiniteNumber"])(frag.sn)) {
       var stats = part ? part.stats : frag.stats;
       var duration = part ? part.duration : frag.duration; // stop monitoring bw once frag loaded
 
-      this.clearTimer(); // store level id after successful fragment load
+      this.clearTimer();
+      this.clearTimer2(); // store level id after successful fragment load
 
       this.lastLoadedFragLevel = frag.level; // reset forced auto level value so that next level will be selected
 
