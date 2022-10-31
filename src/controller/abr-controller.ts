@@ -2,18 +2,16 @@ import EwmaBandWidthEstimator from '../utils/ewma-bandwidth-estimator';
 import { Events } from '../events';
 import { BufferHelper } from '../utils/buffer-helper';
 import { ErrorDetails } from '../errors';
+import type { LoaderStats } from '../types/loader';
 import { PlaylistLevelType } from '../types/loader';
 import { logger } from '../utils/logger';
-import type { Bufferable } from '../utils/buffer-helper';
-import type { Fragment } from '../loader/fragment';
-import type { Part } from '../loader/fragment';
-import type { LoaderStats } from '../types/loader';
+import type { Fragment, Part } from '../loader/fragment';
 import type Hls from '../hls';
 import type {
-  FragLoadingData,
-  FragLoadedData,
-  FragBufferedData,
   ErrorData,
+  FragBufferedData,
+  FragLoadedData,
+  FragLoadingData,
   LevelLoadedData,
 } from '../types/events';
 import type { ComponentAPI } from '../types/component-api';
@@ -277,6 +275,10 @@ class AbrController implements ComponentAPI {
     event: Events.FRAG_LOADED,
     { frag, part }: FragLoadedData
   ) {
+    if (frag.type == PlaylistLevelType.MAIN) {
+      this.clearTimer2();
+    }
+
     if (
       frag.type === PlaylistLevelType.MAIN &&
       Number.isFinite(frag.sn as number)
@@ -285,7 +287,6 @@ class AbrController implements ComponentAPI {
       const duration = part ? part.duration : frag.duration;
       // stop monitoring bw once frag loaded
       this.clearTimer();
-      this.clearTimer2();
       // store level id after successful fragment load
       this.lastLoadedFragLevel = frag.level;
       // reset forced auto level value so that next level will be selected

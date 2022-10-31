@@ -1136,6 +1136,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
@@ -1288,10 +1289,9 @@ var AbrController = /*#__PURE__*/function () {
     }
 
     var stats = part ? part.stats : frag.stats;
-    var duration = part ? part.duration : frag.duration; // If loading has been aborted and not in lowLatencyMode, stop timer and return
+    var duration = part ? part.duration : frag.duration; // If frag loading is aborted, complete, or from lowest level, stop timer and return
 
-    if (stats.aborted) {
-      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].warn('frag loader destroy or aborted, disarm abandonRules');
+    if (stats.aborted || stats.loaded && stats.loaded === stats.total || frag.level === 0) {
       this.clearTimer(); // reset forced auto level value so that next level will be selected
 
       this._nextAutoLevel = -1;
@@ -1303,6 +1303,12 @@ var AbrController = /*#__PURE__*/function () {
       return;
     }
 
+    var bufferInfo = hls.mainForwardBufferInfo;
+
+    if (bufferInfo === null) {
+      return;
+    }
+
     var requestDelay = performance.now() - stats.loading.start;
     var playbackRate = Math.abs(media.playbackRate); // In order to work with a stable bandwidth, only begin monitoring bandwidth after half of the fragment has been loaded
 
@@ -1310,19 +1316,19 @@ var AbrController = /*#__PURE__*/function () {
       return;
     }
 
+    var loadedFirstByte = stats.loaded && stats.loading.first;
+    var bwEstimate = this.bwEstimator.getEstimate();
     var levels = hls.levels,
         minAutoLevel = hls.minAutoLevel;
     var level = levels[frag.level];
     var expectedLen = stats.total || Math.max(stats.loaded, Math.round(duration * level.maxBitrate / 8));
-    var loadRate = Math.max(1, stats.bwEstimate ? stats.bwEstimate / 8 : stats.loaded * 1000 / requestDelay); // fragLoadDelay is an estimate of the time (in seconds) it will take to buffer the entire fragment
+    var loadRate = loadedFirstByte ? stats.loaded * 1000 / requestDelay : 0; // fragLoadDelay is an estimate of the time (in seconds) it will take to buffer the remainder of the fragment
 
-    var fragLoadedDelay = (expectedLen - stats.loaded) / loadRate;
-    var pos = media.currentTime; // bufferStarvationDelay is an estimate of the amount time (in seconds) it will take to exhaust the buffer
+    var fragLoadedDelay = loadRate ? (expectedLen - stats.loaded) / loadRate : expectedLen * 8 / bwEstimate; // bufferStarvationDelay is an estimate of the amount time (in seconds) it will take to exhaust the buffer
 
-    var bufferStarvationDelay = (_utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, pos, config.maxBufferHole).end - pos) / playbackRate; // Attempt an emergency downswitch only if less than 2 fragment lengths are buffered, and the time to finish loading
-    // the current fragment is greater than the amount of buffer we have left
+    var bufferStarvationDelay = bufferInfo.len / playbackRate; // Only downswitch if the time to finish loading the current fragment is greater than the amount of buffer left
 
-    if (bufferStarvationDelay >= 2 * duration / playbackRate || fragLoadedDelay <= bufferStarvationDelay) {
+    if (fragLoadedDelay <= bufferStarvationDelay) {
       return;
     }
 
@@ -1334,7 +1340,7 @@ var AbrController = /*#__PURE__*/function () {
       // 0.8 : consider only 80% of current bw to be conservative
       // 8 = bits per byte (bps/Bps)
       var levelNextBitrate = levels[nextLoadLevel].maxBitrate;
-      fragLevelNextLoadedDelay = duration * levelNextBitrate / (8 * 0.8 * loadRate);
+      fragLevelNextLoadedDelay = loadRate ? duration * levelNextBitrate / (8 * 0.8 * loadRate) : duration * levelNextBitrate / bwEstimate;
 
       if (fragLevelNextLoadedDelay < bufferStarvationDelay) {
         break;
@@ -1347,10 +1353,14 @@ var AbrController = /*#__PURE__*/function () {
       return;
     }
 
-    var bwEstimate = this.bwEstimator.getEstimate();
     _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].warn("Fragment " + frag.sn + (part ? ' part ' + part.index : '') + " of level " + frag.level + " is loading too slowly and will cause an underbuffer; aborting and switching to level " + nextLoadLevel + "\n      Current BW estimate: " + (Object(_Users_mcont_Projects_thesis_hls_js_src_polyfills_number__WEBPACK_IMPORTED_MODULE_0__["isFiniteNumber"])(bwEstimate) ? (bwEstimate / 1024).toFixed(3) : 'Unknown') + " Kb/s\n      Estimated load time for current fragment: " + fragLoadedDelay.toFixed(3) + " s\n      Estimated load time for the next fragment: " + fragLevelNextLoadedDelay.toFixed(3) + " s\n      Time to underbuffer: " + bufferStarvationDelay.toFixed(3) + " s");
     hls.nextLoadLevel = nextLoadLevel;
-    this.bwEstimator.sample(requestDelay, stats.loaded);
+
+    if (loadedFirstByte) {
+      // If there has been loading progress, sample bandwidth
+      this.bwEstimator.sample(requestDelay, stats.loaded);
+    }
+
     this.clearTimer();
 
     if (frag.loader) {
@@ -1368,12 +1378,15 @@ var AbrController = /*#__PURE__*/function () {
     var frag = _ref.frag,
         part = _ref.part;
 
+    if (frag.type == _types_loader__WEBPACK_IMPORTED_MODULE_5__["PlaylistLevelType"].MAIN) {
+      this.clearTimer2();
+    }
+
     if (frag.type === _types_loader__WEBPACK_IMPORTED_MODULE_5__["PlaylistLevelType"].MAIN && Object(_Users_mcont_Projects_thesis_hls_js_src_polyfills_number__WEBPACK_IMPORTED_MODULE_0__["isFiniteNumber"])(frag.sn)) {
       var stats = part ? part.stats : frag.stats;
       var duration = part ? part.duration : frag.duration; // stop monitoring bw once frag loaded
 
-      this.clearTimer();
-      this.clearTimer2(); // store level id after successful fragment load
+      this.clearTimer(); // store level id after successful fragment load
 
       this.lastLoadedFragLevel = frag.level; // reset forced auto level value so that next level will be selected
 
@@ -1471,7 +1484,8 @@ var AbrController = /*#__PURE__*/function () {
     var playbackRate = media && media.playbackRate !== 0 ? Math.abs(media.playbackRate) : 1.0;
     var avgbw = this.bwEstimator ? this.bwEstimator.getEstimate() : config.abrEwmaDefaultEstimate; // bufferStarvationDelay is the wall-clock time left until the playback buffer is exhausted.
 
-    var bufferStarvationDelay = (_utils_buffer_helper__WEBPACK_IMPORTED_MODULE_3__["BufferHelper"].bufferInfo(media, pos, config.maxBufferHole).end - pos) / playbackRate; // First, look to see if we can find a level matching with our avg bandwidth AND that could also guarantee no rebuffering at all
+    var bufferInfo = hls.mainForwardBufferInfo;
+    var bufferStarvationDelay = (bufferInfo ? bufferInfo.len : 0) / playbackRate; // First, look to see if we can find a level matching with our avg bandwidth AND that could also guarantee no rebuffering at all
 
     var bestLevel = this.findBestLevel(avgbw, minAutoLevel, maxAutoLevel, bufferStarvationDelay, config.abrBandWidthFactor, config.abrBandWidthUpFactor);
 
@@ -1549,7 +1563,7 @@ var AbrController = /*#__PURE__*/function () {
       if (adjustedbw > bitrate && ( // fragment fetchDuration unknown OR live stream OR fragment fetchDuration less than max allowed fetch duration, then this level matches
       // we don't account for max Fetch Duration for live streams, this is to avoid switching down when near the edge of live sliding window ...
       // special case to support startLevel = -1 (bitrateTest) on live streams : in that case we should not exit loop so that findBestLevel will return -1
-      !fetchDuration || live && !this.bitrateTestDelay || fetchDuration < maxFetchDuration)) {
+      fetchDuration === 0 || !Object(_Users_mcont_Projects_thesis_hls_js_src_polyfills_number__WEBPACK_IMPORTED_MODULE_0__["isFiniteNumber"])(fetchDuration) || live && !this.bitrateTestDelay || fetchDuration < maxFetchDuration)) {
         // as we are looping from highest to lowest, this will return the best achievable quality level
         return i;
       }
@@ -18234,6 +18248,11 @@ var Hls = /*#__PURE__*/function () {
     key: "playingDate",
     get: function get() {
       return this.streamController.currentProgramDateTime;
+    }
+  }, {
+    key: "mainForwardBufferInfo",
+    get: function get() {
+      return this.streamController.getMainFwdBufferInfo();
     }
     /**
      * @type {AudioTrack[]}

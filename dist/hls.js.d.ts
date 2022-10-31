@@ -251,12 +251,7 @@ declare class BaseStreamController extends TaskLoop implements NetworkComponentA
     } | null;
     protected bufferFragmentData(data: RemuxedTrack, frag: Fragment, part: Part | null, chunkMeta: ChunkMetadata): void;
     protected flushBufferGap(frag: Fragment): void;
-    protected getFwdBufferInfo(bufferable: Bufferable | null, type: PlaylistLevelType): {
-        len: number;
-        start: number;
-        end: number;
-        nextStart?: number;
-    } | null;
+    protected getFwdBufferInfo(bufferable: Bufferable | null, type: PlaylistLevelType): BufferInfo | null;
     protected getMaxBufferLength(levelBitrate?: number): number;
     protected reduceMaxBufferLength(threshold?: number): boolean;
     protected getNextFragment(pos: number, levelDetails: LevelDetails): Fragment | null;
@@ -390,6 +385,13 @@ export declare interface BufferFlushingData {
     endOffsetSubtitles?: number;
     type: SourceBufferName | null;
 }
+
+declare type BufferInfo = {
+    len: number;
+    start: number;
+    end: number;
+    nextStart?: number;
+};
 
 declare class CapLevelController implements ComponentAPI {
     autoLevelCapping: number;
@@ -1662,6 +1664,7 @@ declare class Hls implements HlsEventEmitter {
      * @type {Date}
      */
     get playingDate(): Date | null;
+    get mainForwardBufferInfo(): BufferInfo | null;
     /**
      * @type {AudioTrack[]}
      */
@@ -2524,7 +2527,7 @@ declare class StreamController extends BaseStreamController implements NetworkCo
     private _loadBitrateTestFrag;
     private _handleTransmuxComplete;
     private _bufferInitSegment;
-    private getMainFwdBufferInfo;
+    getMainFwdBufferInfo(): BufferInfo | null;
     private backtrack;
     private checkFragmentChanged;
     get nextLevel(): number;
