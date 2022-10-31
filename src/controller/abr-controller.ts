@@ -76,6 +76,7 @@ class AbrController implements ComponentAPI {
     const frag = data.frag;
     if (frag.type === PlaylistLevelType.MAIN) {
       if (!this.timer) {
+        logger.info('Creating timers');
         this.fragCurrent = frag;
         this.partCurrent = data.part ?? null;
         this.timer = self.setInterval(this.onCheck, 100);
@@ -96,7 +97,7 @@ class AbrController implements ComponentAPI {
   private fillerCheck() {
     const { fragCurrent: frag, hls } = this;
     const { config, media } = hls;
-    if (!frag || !media || frag.stats.aborted) {
+    if (!frag || !media) {
       return;
     }
 
@@ -107,6 +108,7 @@ class AbrController implements ComponentAPI {
 
     // Actually playing
     if (media.paused || !media.playbackRate || !media.readyState) {
+      logger.info('Filler: paused');
       return;
     }
 

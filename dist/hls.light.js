@@ -1196,6 +1196,7 @@ var AbrController = /*#__PURE__*/function () {
       if (!this.timer) {
         var _data$part;
 
+        _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('Creating timers');
         this.fragCurrent = frag;
         this.partCurrent = (_data$part = data.part) != null ? _data$part : null;
         this.timer = self.setInterval(this.onCheck, 100);
@@ -1220,7 +1221,7 @@ var AbrController = /*#__PURE__*/function () {
     var config = hls.config,
         media = hls.media;
 
-    if (!frag || !media || frag.stats.aborted) {
+    if (!frag || !media) {
       return;
     }
 
@@ -1231,6 +1232,7 @@ var AbrController = /*#__PURE__*/function () {
 
 
     if (media.paused || !media.playbackRate || !media.readyState) {
+      _utils_logger__WEBPACK_IMPORTED_MODULE_6__["logger"].info('Filler: paused');
       return;
     } // Calculate if a filler fragment needs to be injected
 
