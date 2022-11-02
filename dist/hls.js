@@ -3601,10 +3601,9 @@ var BaseStreamController = /*#__PURE__*/function (_TaskLoop) {
 
     if (data && data.details === _errors__WEBPACK_IMPORTED_MODULE_6__["ErrorDetails"].INTERNAL_ABORTED) {
       this.handleFragLoadAborted(data.frag, data.part);
-    } else {
-      this.hls.trigger(_events__WEBPACK_IMPORTED_MODULE_5__["Events"].ERROR, data);
     }
 
+    this.hls.trigger(_events__WEBPACK_IMPORTED_MODULE_5__["Events"].ERROR, data);
     return null;
   };
 

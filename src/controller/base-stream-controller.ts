@@ -666,9 +666,8 @@ export default class BaseStreamController
   private handleFragLoadError({ data }: LoadError) {
     if (data && data.details === ErrorDetails.INTERNAL_ABORTED) {
       this.handleFragLoadAborted(data.frag, data.part);
-    } else {
-      this.hls.trigger(Events.ERROR, data as ErrorData);
     }
+    this.hls.trigger(Events.ERROR, data as ErrorData);
     return null;
   }
 
