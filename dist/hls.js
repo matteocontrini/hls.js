@@ -1968,7 +1968,7 @@ var AudioStreamController = /*#__PURE__*/function (_BaseStreamController) {
     } // buffer audio up to one target duration ahead of main buffer
 
 
-    if (mainBufferInfo && targetBufferTime > mainBufferInfo.end + 2 * trackDetails.targetduration) {
+    if (mainBufferInfo && targetBufferTime > mainBufferInfo.end + trackDetails.targetduration) {
       this.log('Not loading more audio because too ahead');
       return;
     } // wait for main buffer after buffing some audio

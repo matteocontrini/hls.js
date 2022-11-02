@@ -348,7 +348,7 @@ class AudioStreamController
     // buffer audio up to one target duration ahead of main buffer
     if (
       mainBufferInfo &&
-      targetBufferTime > mainBufferInfo.end + 2 * trackDetails.targetduration
+      targetBufferTime > mainBufferInfo.end + trackDetails.targetduration
     ) {
       this.log('Not loading more audio because too ahead');
       return;
