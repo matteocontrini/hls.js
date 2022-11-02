@@ -1969,11 +1969,13 @@ var AudioStreamController = /*#__PURE__*/function (_BaseStreamController) {
 
 
     if (mainBufferInfo && targetBufferTime > mainBufferInfo.end + 2 * trackDetails.targetduration) {
+      this.log('Not loading more audio because too ahead');
       return;
     } // wait for main buffer after buffing some audio
 
 
     if ((!mainBufferInfo || !mainBufferInfo.len) && bufferInfo.len) {
+      this.log('Not loading more audio because waiting for some video');
       return;
     }
 
