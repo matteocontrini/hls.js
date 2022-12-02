@@ -2310,7 +2310,7 @@ var BaseStreamController = /*#__PURE__*/function (_TaskLoop) {
         return;
       }
 
-      console.error(reason);
+      console.error(JSON.stringify(reason, Object.getOwnPropertyNames(reason)));
 
       _this3.warn(reason);
 
