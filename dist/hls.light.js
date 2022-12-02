@@ -2310,6 +2310,8 @@ var BaseStreamController = /*#__PURE__*/function (_TaskLoop) {
         return;
       }
 
+      console.error(reason);
+
       _this3.warn(reason);
 
       _this3.resetFragmentLoading(frag);
