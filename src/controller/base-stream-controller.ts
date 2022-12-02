@@ -629,7 +629,10 @@ export default class BaseStreamController
 
     return this.fragmentLoader
       .load(frag, progressCallback)
-      .catch((error: LoadError) => this.handleFragLoadError(error));
+      .catch((error: LoadError) => {
+        console.error(error);
+        return this.handleFragLoadError(error);
+      });
   }
 
   private doFragPartsLoad(
