@@ -2215,6 +2215,8 @@ var BaseStreamController = /*#__PURE__*/function (_TaskLoop) {
         return;
       }
 
+      console.error(reason);
+
       _this2.warn(reason);
 
       _this2.resetFragmentLoading(frag);
