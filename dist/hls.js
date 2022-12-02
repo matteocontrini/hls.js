@@ -3563,7 +3563,7 @@ var BaseStreamController = /*#__PURE__*/function (_TaskLoop) {
       targetBufferTime: targetBufferTime
     });
     return this.fragmentLoader.load(frag, progressCallback).catch(function (error) {
-      console.error(error);
+      console.error(JSON.stringify(error, Object.getOwnPropertyNames(error)));
       return _this4.handleFragLoadError(error);
     });
   };
